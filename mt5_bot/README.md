@@ -3,7 +3,8 @@
 Bot Python qui se connecte à MetaTrader 5 et automatise ta stratégie :
 biais directionnel H4 (BOS), confirmation de structure H1/M30/M15, entrée en M1
 sur confluence FVG + order block + prise de liquidité + zone discount/premium
-(équilibrium Fibonacci) + ton indicateur de mèche d'impulsion (basé sur l'ATR).
+(équilibrium Fibonacci) + ton indicateur "Bougies Impulsions" (portage exact de
+ton script Pine : range de la bougie vs ATR).
 
 **⚠️ Avertissement** : le trading algorithmique comporte un risque de perte en capital.
 Ce bot n'est pas garanti sans bug. Teste-le plusieurs semaines en compte démo,
@@ -40,8 +41,8 @@ copy .env.example .env         # puis remplis MT5_LOGIN / MT5_PASSWORD / MT5_SER
 - `instruments.*.sl_pips / tp1_pips / tp2_pips` : reprennent tes règles
   (BTC: SL 300 / TP1 300 (= seuil BE) / TP2 600 / TP3 ouvert en trailing ;
   Gold: SL 40 (réglable 30-50) / TP1 10 (= seuil BE) / TP2 30 / TP3 60 en trailing).
-- `indicators.wick_impulsion.impulsion_ratio` / `strong_impulsion_ratio` : seuils
-  mèche/ATR pour ton indicateur de mèche d'impulsion — **à calibrer** (voir plus bas).
+- `indicators.impulsion.ratio` : facteur de ton indicateur "Bougies Impulsions"
+  (`facteur` dans ton Pine Script, 1.5 par défaut, identique à ton script).
 
 ## Lancer le bot
 
@@ -68,7 +69,7 @@ Arrêt propre avec `Ctrl+C`.
 | Order block | `indicators/order_blocks.py` | Dernière bougie opposée avant la bougie qui crée la FVG |
 | Prise de liquidité | `indicators/liquidity.py` | Mèche qui dépasse un swing puis clôture de l'autre côté |
 | Équilibrium / Fibo | `indicators/equilibrium.py` | 50% du dernier swing H1, filtre discount/premium |
-| Mèche d'impulsion | `indicators/wick_impulsion.py` | Ratio mèche haute/basse vs ATR(14), 2 seuils (normal/impulsion/forte) |
+| Bougies Impulsions | `indicators/impulsion.py` | Portage exact de ton Pine Script : range (high-low) > facteur × ATR(14), bleu si close>open, violet si close<open |
 | SL 300 pips BTC / 30-50 Gold | `strategy/confluence.py` (calcul SL/TP) | Distance fixe en pips depuis config.yaml |
 | BE au seuil TP1 | `execution/position_monitor.py` | Dès qu'un ticket ferme (TP touché), les autres passent au prix d'entrée |
 | TP1/TP2/TP3 + 3 trades simultanés | `execution/risk_manager.py` + `execution/order_manager.py` | 1 setup = 3 ordres, `risk.split_ratios` répartit le lot total |
@@ -76,16 +77,18 @@ Arrêt propre avec `Ctrl+C`.
 
 ## ⚠️ À calibrer avant tout usage réel
 
-Ton indicateur de mèche d'impulsion et tes définitions de FVG/order block/liquidité
-sont reconstruits ici avec des règles génériques (standards ICT/SMC + ratio ATR).
-Elles ne reproduisent pas forcément à 100% ce que tu vois sur tes charts.
-Avant de laisser tourner le bot :
+L'indicateur "Bougies Impulsions" (`indicators/impulsion.py`) est un portage fidèle
+de ton script Pine — celui-là devrait matcher exactement tes bougies bleues/violettes.
+En revanche tes définitions de FVG/order block/liquidité sont reconstruites ici avec
+des règles génériques (standards ICT/SMC + ratio ATR) qui ne reproduisent pas forcément
+à 100% ce que tu vois sur tes charts. Avant de laisser tourner le bot :
 
 1. Fais tourner le bot **sans qu'il exécute d'ordres** (tu peux commenter l'appel à
    `order_manager.open_setup` dans `main.py` et juste logger les setups détectés)
    pendant quelques jours, et compare les setups détectés à ton analyse manuelle.
-2. Ajuste `indicators.wick_impulsion.impulsion_ratio` jusqu'à ce que les bougies
-   bleues/violettes détectées correspondent à celles que tu marques toi-même.
+2. Vérifie que les FVG/order blocks/liquidités détectés par le bot correspondent à
+   ceux que tu traces toi-même ; ajuste `indicators.fvg.min_gap_atr_ratio` et
+   `indicators.liquidity.*` si besoin.
 3. Seulement ensuite, active l'exécution réelle en démo, puis en réel après
    plusieurs semaines concluantes.
 

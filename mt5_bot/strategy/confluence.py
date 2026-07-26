@@ -3,20 +3,15 @@ import pandas as pd
 from indicators.equilibrium import compute_equilibrium
 from indicators.fvg import detect_fvgs, unfilled_fvgs
 from indicators.liquidity import detect_liquidity_sweep, detect_swings
-from indicators.wick_impulsion import (
+from indicators.impulsion import (
     BULLISH_IMPULSION,
-    BULLISH_STRONG_IMPULSION,
     BEARISH_IMPULSION,
-    BEARISH_STRONG_IMPULSION,
-    classify_wick_impulsion,
+    classify_impulsion,
 )
 from strategy.bias_engine import get_bias
 from strategy.setup import TradeSetup
 
-BULLISH_WICK_SIGNALS = {BULLISH_IMPULSION, BULLISH_STRONG_IMPULSION}
-BEARISH_WICK_SIGNALS = {BEARISH_IMPULSION, BEARISH_STRONG_IMPULSION}
-
-RECENT_CANDLES_WINDOW = 5  # fenêtre récente pour chercher sweep / mèche d'impulsion
+RECENT_CANDLES_WINDOW = 5  # fenêtre récente pour chercher sweep / bougie d'impulsion
 
 
 def generate_setup(
@@ -82,18 +77,17 @@ def generate_setup(
         return None
     reasons.append(f"prix en zone {expected_zone} (équilibrium {equilibrium.equilibrium:.2f})")
 
-    wick_cfg = indicators_cfg["wick_impulsion"]
-    wick_df = classify_wick_impulsion(
+    impulsion_cfg = indicators_cfg["impulsion"]
+    impulsion_df = classify_impulsion(
         entry_df,
         atr_period=atr_period,
-        impulsion_ratio=wick_cfg["impulsion_ratio"],
-        strong_impulsion_ratio=wick_cfg["strong_impulsion_ratio"],
+        impulsion_ratio=impulsion_cfg["ratio"],
     )
-    expected_wick_signals = BULLISH_WICK_SIGNALS if h4_bias == "bullish" else BEARISH_WICK_SIGNALS
-    recent_wick_signals = wick_df["wick_signal"].iloc[-RECENT_CANDLES_WINDOW:]
-    if not recent_wick_signals.isin(expected_wick_signals).any():
+    expected_signal = BULLISH_IMPULSION if h4_bias == "bullish" else BEARISH_IMPULSION
+    recent_signals = impulsion_df["impulsion_signal"].iloc[-RECENT_CANDLES_WINDOW:]
+    if not (recent_signals == expected_signal).any():
         return None
-    reasons.append(f"mèche d'impulsion {h4_bias} détectée sur {entry_tf}")
+    reasons.append(f"bougie d'impulsion {h4_bias} détectée sur {entry_tf}")
 
     direction = "buy" if h4_bias == "bullish" else "sell"
     pip_size = instrument_cfg["pip_size"]

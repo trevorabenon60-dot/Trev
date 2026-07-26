@@ -45,11 +45,11 @@ instruments:
 indicators:
   atr:
     period: 14
-  wick_impulsion:
-    # classification d'une bougie: normale / impulsion / impulsion forte
-    # ratio = (mèche haute ou basse) / ATR(période) de la bougie
-    impulsion_ratio: 1.5
-    strong_impulsion_ratio: 2.5
+  impulsion:
+    # portage exact de l'indicateur Pine Script "Trev — Bougies Impulsions":
+    # bougie = impulsion si (high - low) > ratio * ATR(indicators.atr.period)
+    # bleu = impulsion haussière (close > open), violet = impulsion baissière (close < open)
+    ratio: 1.5
   fvg:
     min_gap_atr_ratio: 0.1        # taille mini du gap (FVG/imbalance) en fraction de l'ATR pour être valide
   liquidity:
