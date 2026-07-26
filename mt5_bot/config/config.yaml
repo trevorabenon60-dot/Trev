@@ -1,0 +1,71 @@
+# Configuration du bot de trading MT5 (stratégie SMC/ICT multi-timeframe)
+# Toutes les valeurs numériques peuvent être ajustées sans toucher au code.
+
+mt5:
+  # Identifiants lus depuis les variables d'environnement (voir .env.example)
+  # login / password / server sont chargés par core/mt5_connector.py via python-dotenv
+  terminal_path: ""  # optionnel: chemin vers terminal64.exe si auto-détection échoue
+
+account:
+  # Compte de test - NE JAMAIS passer en compte réel sans plusieurs semaines
+  # de validation en démo (voir README section "Passage en réel").
+  mode: "demo"
+
+risk:
+  risk_per_trade_pct: 1.0        # % du capital risqué par idée de trade (réparti sur les 3 tickets)
+  daily_loss_limit_pct: 1.0      # coupe-circuit journalier: plus aucune nouvelle position après -1% sur la journée
+  max_concurrent_setups: 1       # nombre d'"idées de trade" ouvertes en même temps (chaque idée = 3 tickets)
+  split_ratios: [0.34, 0.33, 0.33]  # répartition du lot total entre TP1 / TP2 / TP3
+
+instruments:
+  BTCUSD:
+    symbol: "BTCUSD"            # nom exact du symbole chez ton broker (ajuste si suffixe, ex: BTCUSD.p)
+    pip_size: 1.0                # 1 "pip" = 1.0 unité de prix pour le BTC dans tes règles
+    sl_pips: 300                 # SL max
+    tp1_pips: 300                 # = seuil de mise à Break Even
+    tp2_pips: 600
+    tp3_trailing: true            # TP3 laissé ouvert, géré en trailing / clôture manuelle sur signal inverse
+    entry_timeframe: "M1"         # timeframe d'entrée fine (FVG / order block)
+    bias_timeframe: "H4"          # timeframe du biais directionnel (BOS)
+    structure_timeframes: ["H1", "M30", "M15"]  # confirmation de la structure
+
+  XAUUSD:
+    symbol: "XAUUSD"             # ajuste si suffixe chez ton broker, ex: XAUUSD.p
+    pip_size: 0.1                 # 1 pip = 0.1 unité de prix (convention standard or)
+    sl_pips: 40                   # valeur par défaut dans la fourchette 30-50 pips donnée
+    sl_pips_min: 30
+    sl_pips_max: 50
+    tp1_pips: 10                  # = seuil de mise à Break Even
+    tp2_pips: 30
+    tp3_trailing: true
+    entry_timeframe: "M1"
+    bias_timeframe: "H4"
+    structure_timeframes: ["H1", "M30", "M15"]
+
+indicators:
+  atr:
+    period: 14
+  wick_impulsion:
+    # classification d'une bougie: normale / impulsion / impulsion forte
+    # ratio = (mèche haute ou basse) / ATR(période) de la bougie
+    impulsion_ratio: 1.5
+    strong_impulsion_ratio: 2.5
+  fvg:
+    min_gap_atr_ratio: 0.1        # taille mini du gap (FVG/imbalance) en fraction de l'ATR pour être valide
+  liquidity:
+    swing_lookback: 5             # nb de bougies de chaque côté pour définir un swing high/low
+    equal_level_tolerance_pips: 5 # tolérance pour considérer deux swings comme "liquidité égale"
+  equilibrium:
+    # zone premium/discount calculée sur le dernier swing (retracement Fibonacci 50%)
+    discount_threshold: 0.5       # en dessous de 50% du swing = discount (zone d'achat)
+    premium_threshold: 0.5        # au dessus de 50% du swing = premium (zone de vente)
+
+execution:
+  poll_interval_seconds: 15       # fréquence de vérification des nouvelles bougies / gestion des positions
+  magic_number: 20260726          # identifiant unique des ordres passés par ce bot
+  slippage_points: 20
+  order_comment: "smc-bot"
+
+logging:
+  level: "INFO"
+  file: "logs/bot.log"

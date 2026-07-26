@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+mt5_bot/logs/*.log
+.DS_Store
+venv/
+.venv/
