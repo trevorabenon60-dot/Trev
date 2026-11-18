@@ -1,0 +1,18 @@
+{
+  "name": "gta6-letrev-thumbnail",
+  "private": true,
+  "description": "Procedural renderer for the LETREV GTA 6 YouTube thumbnail (1280x720).",
+  "scripts": {
+    "render": "node render.js && python3 finalize.py"
+  },
+  "dependencies": {
+    "@fontsource/anton": "^5.0.0",
+    "@fontsource/monoton": "^5.0.0",
+    "@fontsource/righteous": "^5.0.0",
+    "@fontsource/russo-one": "^5.0.0",
+    "@fontsource/bungee": "^5.0.0",
+    "@fontsource/tilt-neon": "^5.0.0",
+    "@fontsource/yellowtail": "^5.0.0",
+    "@fontsource/kaushan-script": "^5.0.0"
+  }
+}
